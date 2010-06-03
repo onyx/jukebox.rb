@@ -1,2 +1,8 @@
-<li><%= entry %> <a href="<%= playlist_delete_url({:id => entry.id}) %>"
-title='<%= entry.file_location %>'>delete from playlist</a></li>
+<tr class='entry_row'>
+  <td class='playlist_entry entry_number muted' ><%= entry_counter + 1%></td>
+  <td class='playlist_entry entry_delete_link' ><a href="<%= playlist_delete_url({:id => entry.id}) %>" title='<%= entry.file_location %>'>X</a></td>
+  <td class='playlist_entry entry_collection muted' ><%= entry.collection %></td>
+  <td class='playlist_entry entry_title' ><%= entry.title %></td>
+  <td class='playlist_entry entry_artist muted' ><%= entry.artist %></td>
+  <td class='playlist_entry entry_album muted' ><%= entry.album %></td>
+</tr>

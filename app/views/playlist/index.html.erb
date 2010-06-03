@@ -2,46 +2,116 @@
   <meta http-equiv="refresh" content="30" />
 <% end %>
 
-<div class="container">
-  <div class="span-24">
-    <h1>
-      Jukebox.rb
-    </h1>
-    <hr>
-  </div>
-  <div class="span-24">
-    <h2>
-      Now playing:
-	  	<% if now_playing.nil? %>
-			idle
-		<% else %>
- 			<%= now_playing %>
-		<% end %>
-    </h2>
-    <%= "<p>&lt;#{now_playing.file_location}&gt;</p>" unless now_playing.nil? %> 
-	<p>
-	<% if playing? %>
-		<a href="<%= playlist_pause_url %>">Pause</a>
-	<% else %>
-		<a href="<%= playlist_play_url %>">Play</a>
-	<% end %>
-	<% if now_playing %>
-	|
-	<a href="<%= playlist_skip_url({:id => now_playing.id}) %>">Skip Current Track</a>
-	<% end %>
-	|
-	<a href="<%= playlist_add_random_url %>">Add a random track</a>
-	|
-	<a href="<%= playlist_add_random_url+"/5" %>">Add 5 random tracks</a>
-	</p>
-	<%= check_box_tag "continuous_play", "1", continuous_play? %> Contintuous Play
-	<%= observe_field "continuous_play", :method => :get, :url => playlist_toggle_continuous_play_url %>
-	</p>
-    <hr>
-    <h3>Up next</h3>
-    <ol>
-      <%= render :partial => "entry", :collection => ready_to_play %>
-    </ol>
-    <hr>
-  </div>
+<style type="text/css">
+  body { 
+     margin-top: 0px; 
+     margin-left: 20px;
+     margin-right: 20px;
+     max-width:950px;
+     }
+  
+  .muted { color:#888; }
+
+  .jukebox { 
+     font-weight:bold; 
+     font-size: 16pt; 
+     float:right; 
+     }
+  
+  .playlist_table { }
+  .playlist_entry { border-bottom: 1px solid grey; }
+  .entry_number {}
+  .entry_delete_link a { 
+     text-decoration:none; 
+     color:red; 
+     font-weight:bold; 
+     }
+     
+  .entry_artist {}
+  .entry_album {}
+  .entry_title { font-weight:bold; }
+  
+  .controls { 
+     width:300px; 
+     margin-top:5px; 
+     margin-bottom:5px; 
+     }
+	    
+  .controls a { 
+     text-decoration:none; 
+     color:black;
+     }
+	      
+  .controls td { 
+     white-space: nowrap; 
+     border:1px solid #AAA;
+     margin:2px;
+     background-color: #DDD;
+     text-align:center;
+     font-weight:bold; 
+     }
+
+  .now_playing_block { 
+     margin-bottom: 5px;
+     padding-top:13px;
+     padding-bottom:13px;
+     border-top:1px solid #DDD;
+     border-bottom: 1px solid #DDD;
+     }
+
+  .now_playing_title { font-size: 20pt; }
+
+  .now_playing_artist { font-size: 16pt; }
+
+</style>
+
+<script language='javascript'>
+  function toggle_continuous_play_control() {
+    control = document.getElementById('continuous_play_control');
+    button = document.getElementById('toggle_continuous_play_control_link');
+    if (control.style.display == '') {
+      button.innerHTML = '&gt;';
+      control.style.display = 'none';
+    } else {
+      control.style.display = '';
+      button.innerHTML = '&lt;';
+    }
+  }
+</script>
+
+<span class='jukebox'>Jukebox.rb</span>
+<table class='controls'><tr>
+  <td>
+    <a style='color:#888;' id='toggle_continuous_play_control_link' href='javascript:toggle_continuous_play_control();'>></a><span 
+    id='continuous_play_control' style='display:none;'>
+      <%= check_box_tag "continuous_play", "1", continuous_play? %> Continuous Play
+      <%= observe_field "continuous_play", :method => :get, :url => playlist_toggle_continuous_play_url %>
+    </span>
+  </td>
+  <td>
+    <%= playing? ? "<a href='#{ playlist_pause_url }'>Pause</a>" : "<a href='#{ playlist_play_url }'>Play</a>" %>
+  </td>
+  <% if now_playing %>
+    <td>
+      <a href="<%= playlist_skip_url({:id => now_playing.id}) %>">Skip</a>
+    </td>
+  <% end %>
+  <td>
+    <a href="<%= playlist_add_random_url %>">Add Random</a>
+  </td>
+  <td>
+    <a href="<%= playlist_add_random_url+"/5" %>">Add 5 Random</a>
+  </td>
+</tr></table>
+
+<div class='now_playing_block'>
+  <span class='now_playing_title entry_title'><%= now_playing ? now_playing.title : "Idle" %></span>
+  <span class='now_playing_artist muted' style='padding-left:15px;'>
+    <%= "#{now_playing.artist} - #{now_playing.collection}" if now_playing %>
+  </span>
+</div>
+  
+<table class='playlist_table'>
+  <%= render :partial => "entry", :collection => ready_to_play %>
+</table>
 </div>

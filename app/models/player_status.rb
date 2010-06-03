@@ -3,7 +3,7 @@ class PlayerStatus < ActiveRecord::Base
   PAUSE = "pause"
   
   def self.jukebox
-    find(:first) or create!
+    find(:first) or create! :continuous_play => true
   end
   
   def self.status

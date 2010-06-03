@@ -1,5 +1,16 @@
 require 'id3'
 
+class Array
+  def shuffle
+    srand(Time.now.to_i)
+    sort_by { rand }
+  end
+ 
+  def shuffle!
+    self.replace shuffle
+  end
+end
+		
 class PlaylistEntry < ActiveRecord::Base
   UNPLAYED = "unplayed"
   PLAYING = "playing"
@@ -8,11 +19,19 @@ class PlaylistEntry < ActiveRecord::Base
     find_by_status(PlaylistEntry::PLAYING)
   end
   
+  def self.clean_up_playlist
+    find(:all).each do |entry|
+      entry.destroy unless File.exist? entry.file_location
+    end
+  end
+  
   def self.find_ready_to_play
+    self.clean_up_playlist
     find(:first, :conditions => {:status => UNPLAYED}, :order => :id)
   end
 
   def self.find_all_ready_to_play
+    self.clean_up_playlist
     find(:all, :conditions => {:status => UNPLAYED}, :order => :id)
   end
 
@@ -26,12 +45,11 @@ class PlaylistEntry < ActiveRecord::Base
 
   def self.create_random!(params = {})
     mp3_files = Dir.glob(File.join([JUKEBOX_MUSIC_ROOT, params[:user], "**", "*.mp3"].compact))
+    mp3_files -= PlaylistEntry.find_all_ready_to_play.map &:file_location
     return if mp3_files.empty?
 
-    srand(Time.now.to_i)
-    (params[:number_to_create] || 1).to_i.times do
-      create! :file_location => mp3_files[rand(mp3_files.size)]
-    end
+    mp3_files.shuffle!
+    (params[:number_to_create] || 1).to_i.times { create! :file_location => mp3_files.pop }
   end
 
   def self.skip(track_id)
@@ -41,30 +59,45 @@ class PlaylistEntry < ActiveRecord::Base
   def filename
     self.file_location.split('/').last
   end
-  
+
+  def collection
+    self.file_location.gsub(JUKEBOX_MUSIC_ROOT,'').split('/')[1].camelize
+  end
+
   begin # ID3 Tag Methods
     def id3
-      @id3 ||= ID3::AudioFile.new(file_location)
+      unless @id3
+        @id3 = {}
+        raw_id3 = ID3::AudioFile.new(file_location)
+	tag_version = (raw_id3.tagID3v2 && raw_id3.tagID3v2['TITLE'] && (raw_id3.tagID3v2['TITLE']['text'] =~ /^\377/) == nil) ? 2 : 1
+        tags = raw_id3.send :"tagID3v#{tag_version}"
+	if tags
+          ['TITLE','ARTIST','ALBUM','TRACKNUM'].each do |field|
+	    @id3[field] = tags[field] ? (tag_version == 2 ? tags[field]['text'] : tags[field]) : ''
+	  end
+	end
+      end
+      @id3	
     end
   
     def title
-      id3.tagID3v2['TITLE']['text'] if id3.tagID3v2 && id3.tagID3v2['TITLE']
+      id3['TITLE']
     end
 
     def artist
-      id3.tagID3v2['ARTIST']['text'] if id3.tagID3v2 && id3.tagID3v2['ARTIST']
+      id3['ARTIST']
     end
 
     def album
-      id3.tagID3v2['ALBUM']['text'] if id3.tagID3v2 && id3.tagID3v2['ALBUM']
+      id3['ALBUM']
     end
 
     def track_number
-      id3.tagID3v2['TRACKNUM']['text'] if id3.tagID3v2 && id3.tagID3v2['TRACKNUM']
+      id3['TRACKNUM']
     end
   
     def to_s
-      "#{artist} - #{title} (#{album})"
+      "#{title} (#{album}) - #{artist} - #{collection}"
     end
   end
   
