@@ -1,0 +1,36 @@
+<style type="text/css">
+  .enable_disable_popup { font-weight: bold; }
+
+  .enable_disable_popup_header { 
+      padding-bottom:5px;
+  }
+	    
+  .enable_disable_popup_row {
+     padding-bottom: 3px;
+     width: 100%;
+  }
+  
+  .enable_disable_popup_row_enabled  a { 
+    text-decoration: none; 
+    color: green;
+  }
+  
+  .enable_disable_popup_row_disabled a { 
+    text-decoration: none;
+    color: red; 
+    padding-left:50%;
+  }
+</style>
+
+<div class='enable_disable_popup'>
+  <div class='enable_disable_popup_header'>Play Music For:</div>
+  <%- state = Enabler.state
+      state.keys.map(&:downcase).sort.each do |user| -%>
+    <div id='enable_disable_<%= user %>_row'
+    	 class='enable_disable_popup_row enable_disable_popup_row_<%= state[user] ? 'enabled' : 'disabled' %>'>
+       <a href='javascript:handleEnableDisableChange("<%= user %>");'><%= user.titleize %></a>
+    </div>
+  <%- end -%>
+</div>
+
+<%- javascript_include_tag 'prototype' -%>

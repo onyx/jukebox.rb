@@ -1,6 +1,8 @@
 <% content_for :head do %>
-  <meta http-equiv="refresh" content="10" />
+  <meta http-equiv="refresh" content="30" />
 <% end %>
+
+<link rel="stylesheet" href="tinybox.css" />
 
 <style type="text/css">
   body { 
@@ -65,20 +67,6 @@
 
 </style>
 
-<script language='javascript'>
-  function toggle_continuous_play_control() {
-    control = document.getElementById('continuous_play_control');
-    button = document.getElementById('toggle_continuous_play_control_link');
-    if (control.style.display == '') {
-      button.innerHTML = '&gt;';
-      control.style.display = 'none';
-    } else {
-      control.style.display = '';
-      button.innerHTML = '&lt;';
-    }
-  }
-</script>
-
 <span class='jukebox'>Jukebox.rb</span>
 <table class='controls'><tr>
   <td>
@@ -102,6 +90,9 @@
   <td>
     <a href="<%= playlist_add_random_url+"/5" %>">Add 5 Random</a>
   </td>
+  <td>
+    <a href="javascript:show_enable_disable();">Enable/Disable</a>
+  </td>
 </tr></table>
 
 <div class='now_playing_block'>
@@ -114,4 +105,37 @@
 <table class='playlist_table'>
   <%= render :partial => "entry", :collection => ready_to_play %>
 </table>
-</div>
+
+<script language='javascript'>
+  function toggle_continuous_play_control() {
+    control = document.getElementById('continuous_play_control');
+    button = document.getElementById('toggle_continuous_play_control_link');
+    if (control.style.display == '') {
+      button.innerHTML = '&gt;';
+      control.style.display = 'none';
+    } else {
+      control.style.display = '';
+      button.innerHTML = '&lt;';
+    }
+  }
+  
+  function show_enable_disable() {
+    TINY.box.show("enabler/checkboxes",1,0,0,1);
+  }
+  
+  function handleEnableDisableChange(user) {
+    row = $("enable_disable_"+user+"_row");
+    enabled = row.hasClassName("enable_disable_popup_row_enabled");
+    if (enabled) {
+      row.addClassName('enable_disable_popup_row_disabled');
+      row.removeClassName('enable_disable_popup_row_enabled');
+    } else {
+      row.addClassName('enable_disable_popup_row_enabled');
+      row.removeClassName('enable_disable_popup_row_disabled');
+    }
+    new Ajax.Request('/'+user+'/' + (enabled ? 'disable' : 'enable'));
+  }
+  
+</script>
+
+<%= javascript_include_tag 'tinybox_packed' %>

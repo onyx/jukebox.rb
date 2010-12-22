@@ -1,16 +1,15 @@
 require 'id3'
 
 class Array
-  def shuffle
-    srand(Time.now.to_i)
-    sort_by { rand }
-  end
- 
   def shuffle!
-    self.replace shuffle
+    [*0..self.size-1].reverse.each do |i|
+      j = Kernel.rand(i+1)
+      self[i], self[j] = self[j], self[i]
+    end
+    self
   end
 end
-		
+
 class PlaylistEntry < ActiveRecord::Base
   UNPLAYED = "unplayed"
   PLAYING = "playing"
@@ -27,7 +26,15 @@ class PlaylistEntry < ActiveRecord::Base
   
   def self.find_ready_to_play
     self.clean_up_playlist
-    find(:first, :conditions => {:status => UNPLAYED}, :order => :id)
+    track_to_play = nil
+    while (track = find(:first, :conditions => {:status => UNPLAYED}, :order => :id)) && track_to_play.nil?
+      if track.owner_disabled?  && !Enabler.enabled.empty?
+        track.destroy
+      else
+        track_to_play = track
+      end
+    end
+    track_to_play
   end
 
   def self.find_all_ready_to_play
@@ -36,15 +43,18 @@ class PlaylistEntry < ActiveRecord::Base
   end
 
   def self.find_next_track_to_play
+    return false unless PlayerStatus.continuous_play?
+
     track = find_ready_to_play
     return track unless track.nil?
-    return false unless PlayerStatus.continuous_play?
+    
     create_random!
     find_ready_to_play
   end
 
   def self.create_random!(params = {})
-    mp3_files = Dir.glob(File.join([JUKEBOX_MUSIC_ROOT, params[:user], "**", "*.mp3"].compact))
+    users = [params[:user] || Enabler.all].flatten
+    mp3_files = users.map { |user| Dir.glob(File.join([JUKEBOX_MUSIC_ROOT, user, "**", "*.mp3"])) }.flatten
     mp3_files -= PlaylistEntry.find_all_ready_to_play.map &:file_location
     return if mp3_files.empty?
 
@@ -61,7 +71,15 @@ class PlaylistEntry < ActiveRecord::Base
   end
 
   def collection
-    self.file_location.gsub(JUKEBOX_MUSIC_ROOT,'').split('/')[1].camelize
+    self.file_location.gsub(JUKEBOX_MUSIC_ROOT,'').split('/')[1]
+  end
+
+  def owner
+    file_location.gsub(/#{JUKEBOX_MUSIC_ROOT}\/(\w+)\/.*/, '\1')
+  end
+
+  def owner_disabled?
+    Enabler.disabled.include? owner
   end
 
   begin # ID3 Tag Methods

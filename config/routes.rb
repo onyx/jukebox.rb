@@ -15,4 +15,8 @@ ActionController::Routing::Routes.draw do |map|
   map.playlist_next_hammertime '/playlist/next_hammertime', :controller => 'playlist', :action => 'next_hammertime'
   
   map.hammertime_add_for '/hammertime/add_for/:name', :controller => 'hammertime', :action => 'add_for'
+
+  map.enabler_enable '/:user/enable',   :controller => 'enabler', :action => 'enable'
+  map.enabler_disable '/:user/disable', :controller => 'enabler', :action => 'disable'
+  map.enable_checkboxes '/enabler/checkboxes', :controller => 'enabler', :action => 'checkboxes'
 end
