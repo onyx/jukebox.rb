@@ -1,5 +1,6 @@
 ActionController::Routing::Routes.draw do |map|
   map.connect '', :controller => 'playlist', :action => 'index'
+  map.current_song '/current_song', :controller => 'playlist', :action => 'current_song'
   map.playlist '/playlist', :controller => 'playlist', :action => 'index'
   map.playlist_add_random_number '/playlist/add_random/:number_to_create', :controller => 'playlist', :action => 'add_random'
   map.playlist_add_random '/playlist/add_random', :controller => 'playlist', :action => 'add_random'

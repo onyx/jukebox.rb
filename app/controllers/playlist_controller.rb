@@ -4,16 +4,16 @@ class PlaylistController < ApplicationController
 
   def add_random
     PlaylistEntry.create_random!(:number_to_create => params[:number_to_create] || 1)
-    
+
     redirect_to playlist_url
   end
-  
+
   def add_for
     PlaylistEntry.create_random!(:user => params[:name])
-    
+
     redirect_to playlist_url
   end
-  
+
   def delete
     PlaylistEntry.delete(params[:id])
 
@@ -31,18 +31,18 @@ class PlaylistController < ApplicationController
 
     redirect_to playlist_url
   end
-  
+
   def skip
-    PlaylistEntry.skip(params[:id]) 
+    PlaylistEntry.skip(params[:id])
     sleep 1
-    
+
     redirect_to playlist_url
   end
-  
+
   def status
     render :text => PlayerStatus.status
   end
-  
+
   def skip_requested
     current_track = PlaylistEntry.playing_track
     skip = current_track.nil? ? false : current_track.skip
@@ -56,11 +56,11 @@ class PlaylistController < ApplicationController
     if entry = PlaylistEntry.find_next_track_to_play
       entry.update_attributes!(:status => PlaylistEntry::PLAYING)
       filename = entry.file_location
-    end    
-    
+    end
+
     render :text => filename
   end
-  
+
   def next_hammertime
     text = ""
     if hammertime = Hammertime.find(:first)
@@ -70,14 +70,18 @@ class PlaylistController < ApplicationController
               hammertime.after].join('|')
       Hammertime.delete(hammertime)
     end
-    
+
     render :text => text
   end
-  
+
   def toggle_continuous_play
     PlayerStatus.toggle_continuous_play
-    
+
     render :nothing => true
+  end
+
+  def current_song
+    render :text => PlaylistEntry.find_by_status(PlaylistEntry::PLAYING).to_s
   end
 
 end
